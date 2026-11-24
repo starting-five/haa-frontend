@@ -1,0 +1,125 @@
+HAA Platform (Frontend + Backend) — Tech Stack / Architecture Summary
+
+Business-facing view of the current architecture
+- Frontend (haa-frontend): the website/app experience users interact with.
+- Backend (haa-backend): the service layer that validates, secures, and stores data.
+- Shared data foundation: Supabase for authentication, database, and secure file storage.
+- Deployment foundation: Docker-based containers, with release traceability built into both apps and environment promotion from Alpha to Beta to Production.
+
+Frontend stack (haa-frontend) — current and specific
+Primary technologies
+- Next.js + React 19 + TypeScript: powers the web application and page routing.
+- Tailwind CSS + component libraries (Radix/shadcn patterns): consistent, mobile-first design system.
+- next-intl: built-in bilingual experience (English/Spanish) with localized routing.
+
+Functional capabilities in the frontend
+- Guided multi-step intake journeys.
+- Ambassador onboarding, profile editing, link/QR sharing, and dashboard views.
+- Session-aware navigation guards so users follow the intended flow.
+- Environment-aware behavior (for example, beta search indexing controls).
+
+Quality and release readiness controls (frontend)
+- Automated testing layers: unit, integration, contract, compatibility, and end-to-end tests.
+- Automated linting/type checks and release validation scripts.
+- Deployment smoke checks and post-deploy verification scripts.
+
+Backend stack (haa-backend) — current and specific
+Primary technologies
+- Node.js + Express + TypeScript: API service layer.
+- Supabase client + PostgreSQL access patterns: data operations and schema migrations.
+
+Functional responsibilities in the backend
+- Intake lifecycle APIs (start, updates, completion).
+- Identity/session enforcement for protected case access.
+- Profile and ambassador support endpoints.
+- Agreement/case and operational utility endpoints (health/version visibility).
+
+Data safety and lifecycle controls (backend)
+- Migration scripts and validation scripts to protect schema/data changes.
+- Data-preservation and isolation test scripts for sensitive flows.
+- Explicit version/build identity support for deployment traceability.
+
+Shared infrastructure and operations model
+Data and storage
+- Supabase is the shared managed backbone for:
+	- authentication/session data,
+	- relational database records,
+	- private file storage (uploads/assets).
+- Supabase security model (high level):
+	- private storage buckets for protected files,
+	- Row Level Security (RLS) for data access boundaries,
+	- backend-controlled access patterns for protected files and sensitive records.
+
+Cloud platform (AWS)
+- AWS is part of the production delivery model for container-based deployments.
+- Container images are built and published to Amazon ECR (container registry).
+- Backend runtime model: deployed as ECS services/tasks (container orchestration).
+- Frontend runtime model: currently deployed from ECR to a single EC2-hosted container, managed through SSM-based operational workflows.
+- In plain terms: AWS provides the cloud runtime and release plumbing, while Supabase provides the managed data/auth/storage backbone.
+
+Container and environment model
+- Both frontend and backend are containerized with Docker.
+- Local and team runbooks support running both services together via Docker Compose.
+- Health/version endpoints support runtime monitoring and supportability.
+
+Release traceability
+- Both services include build/version identity at runtime.
+- This gives operations and leadership a clear answer to: what version is running, from which commit, in which environment.
+
+Current external integrations (non-exhaustive)
+- Google Maps services: location capture and assistance in user flows.
+- Referral/link infrastructure (Dub): ambassador links and QR workflows.
+- DocuSign: core patient-journey agreement flow with embedded signing experience.
+- Twilio/SMS OTP: authentication and verification architecture for phone-based sign-in/verification flows.
+- Agreement/operations support scripts and route-level integrations in the backend.
+
+Environment promotion model
+- Alpha: earliest controlled environment for rapid iteration and verification.
+- Beta: broader pre-release environment for stakeholder and operational validation.
+- Production: fully released environment for end users.
+- Promotion approach: one release line moves forward through Alpha -> Beta -> Production with traceable build/version identity.
+
+Environment posture
+- Beta behavior is intentionally controlled:
+	- Search engines are blocked from indexing beta content (no-crawl).
+	- Password gate for beta access has been removed per current direction.
+- Route-level protections still apply for unfinished or restricted areas.
+
+Scaling Roadmap (Stakeholder View)
+
+Phase 1: First 10K active users
+Goal: deliver a reliable experience while learning real usage patterns.
+- Run backend on autoscaling ECS services and keep frontend stable on the current single-host container runtime.
+- Keep the platform simple: one primary database layer (Supabase) and clear API ownership.
+- Monitor core business journeys (intake completion, ambassador profile updates, link sharing).
+- Use release safety checks (automated tests + smoke tests) before each deployment.
+
+What success looks like at 10K
+- Stable day-to-day performance.
+- Fast issue detection.
+- Predictable release quality.
+
+Phase 2: 10K to 100K users
+Goal: increase throughput without redesigning the product experience.
+- Expand autoscaling thresholds and tune capacity based on traffic peaks.
+- Move frontend from single-host runtime toward a highly available multi-instance/container model.
+- Optimize top database/API paths and add targeted caching where repeated reads are high.
+- Introduce staged rollouts (small % first, then full rollout) to reduce deployment risk.
+- Strengthen operational dashboards and alerting for latency, errors, and throughput.
+
+What success looks like at 100K
+- Consistent performance at peak periods.
+- No major release-related incidents.
+- Faster recovery when third-party services degrade.
+
+Phase 3: 100K+ users
+Goal: scale sustainably with stronger operational discipline.
+- Introduce deeper workload separation for heavy-read vs heavy-write paths.
+- Expand resilience patterns (graceful fallback behavior and tighter incident playbooks).
+- Formalize domain ownership across teams (Intake, Ambassador, Platform, Integrations).
+- Add stronger governance cadence (security/access reviews and capacity planning checkpoints).
+
+What success looks like beyond 100K
+- Platform growth without major architecture disruption.
+- Better cost/performance control.
+- Clear accountability across product and engineering teams.
